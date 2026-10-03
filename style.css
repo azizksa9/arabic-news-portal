@@ -20,3 +20,7 @@
   .hero-meta{margin-top:4px}
   .hero-status{margin-top:3px}
 }
+
+/* Move countdown away from story text */
+#heroCountdown{left:24px!important;top:78px!important;bottom:auto!important}
+@media(max-width:600px){#heroCountdown{left:18px!important;top:76px!important;bottom:auto!important}}
