@@ -106,10 +106,31 @@ async function fetchArticleBody(raw,title){
     return articleData(h)||nextDataBody(h,title)||paragraphBody(h,title)||'';
   }catch{return''}
 }
+function titleTerms(title=''){return norm(title).split(/\s+/).filter(w=>w.length>=4&&!['العربية','عاجل','الخبر','اليوم','الآن','قال','أكد'].includes(w)).slice(0,12)}
+function matchScore(title,text=''){
+  const terms=titleTerms(title),n=norm(text);if(!terms.length)return 0;
+  return terms.filter(w=>n.includes(w)).length/terms.length
+}
+async function verifiedNewsContext(title){
+  try{
+    const q=encodeURIComponent(title.replace(/[#＃]\s*العربية/gi,'').slice(0,180));
+    const r=await fetch('https://news.google.com/rss/search?q='+q+'&hl=ar&gl=SA&ceid=SA:ar',{headers:{'User-Agent':'Mozilla/5.0'},cache:'no-store'});
+    if(!r.ok)return'';
+    const xml=await r.text(),good=[];
+    for(const m of xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)){
+      const b=m[1],rt=txt((b.match(/<title(?:\s[^>]*)?>([\s\S]*?)<\/title>/i)||[])[1]||''),rd=txt((b.match(/<description(?:\s[^>]*)?>([\s\S]*?)<\/description>/i)||[])[1]||'');
+      const combined=(rt+' '+rd).trim(),score=matchScore(title,combined);
+      if(score>=0.55&&rd.split(/\s+/).length>=10)good.push({score,text:rd});
+    }
+    good.sort((a,b)=>b.score-a.score);
+    if(good.length<2)return'';
+    return good.slice(0,5).map(x=>x.text).join('\n');
+  }catch{return''}
+}
 async function aiSummary(title,context){
   const key=process.env.OPENAI_API_KEY;if(!key||!context)return'';
   try{
-    const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({model:'gpt-5-mini',input:'لخّص الخبر التالي بالعربية في 5 إلى 10 أسطر قصيرة مناسبة لشاشة هاتف. لا تكرر العنوان في البداية، ولا تضف أي معلومة غير موجودة في النص. ركّز على أهم الوقائع والتفاصيل.\n\nالعنوان: '+title+'\n\nالمادة المتاحة: '+context.slice(0,9000),max_output_tokens:450})});
+    const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({model:'gpt-5-mini',input:'لخّص الخبر التالي بالعربية في 5 إلى 10 أسطر قصيرة مناسبة لشاشة هاتف. لا تكرر العنوان في البداية. استخدم فقط الوقائع المشتركة أو الواضحة في المادة المتاحة، ولا تضف أي معلومة غير موجودة فيها. إذا وجدت تفاصيل متعارضة فتجاهلها. ركّز على أهم الوقائع والتفاصيل.\n\nالعنوان: '+title+'\n\nالمادة المتاحة: '+context.slice(0,9000),max_output_tokens:450})});
     if(!r.ok)return'';const j=await r.json();const direct=String(j.output_text||'').trim();if(direct)return direct;const parts=[];for(const item of (j.output||[])){for(const c of (item.content||[])){if(typeof c.text==='string')parts.push(c.text)}}return parts.join('\n').trim();
   }catch{return''}
 }
@@ -122,7 +143,7 @@ export default async function handler(req){try{
     articleUrl=await findOriginalArticle(title);
     if(articleUrl)body=await fetchArticleBody(articleUrl,title);
   }
-  if(!body||body.split(/\s+/).length<35)return Response.json({summary:'',articleUrl});
+  if(!body||body.split(/\s+/).length<35){const verified=await verifiedNewsContext(title);if(verified)body=verified}if(!body||body.split(/\s+/).length<35)return Response.json({summary:'',articleUrl});
   const ai=await aiSummary(title,body),summary=ai||summarize(title,body);
   return new Response(JSON.stringify({summary,articleUrl}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, s-maxage=1800, stale-while-revalidate=3600'}})
 }catch{return Response.json({summary:''})}}
