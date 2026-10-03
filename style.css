@@ -50,3 +50,7 @@
 /* Lift countdown just above the story image without covering it */
 #heroCountdown{left:56px!important;top:96px!important}
 @media(max-width:600px){#heroCountdown{left:49px!important;top:91px!important}}
+
+/* Final countdown position: fully above image, centered with it */
+#heroCountdown{left:56px!important;top:82px!important}
+@media(max-width:600px){#heroCountdown{left:49px!important;top:78px!important}}
