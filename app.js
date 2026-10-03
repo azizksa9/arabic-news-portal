@@ -31,7 +31,7 @@ async function playSpeech(text){
 }
 async function speakStory(title='',desc=''){
   if(!soundEnabled)return;
-  const text=String(title||'').replace(/\s+/g,' ').trim();
+  const text=String(title||'').replace(/\s*[-–—|]\s*(العربية|Al Arabiya)\s*$/i,'').replace(/\s+(العربية)\s*$/,'').replace(/\s+/g,' ').trim();
   if(!text||text===lastSpokenKey)return;
   lastSpokenKey=text;
   try{await playSpeech(text)}
