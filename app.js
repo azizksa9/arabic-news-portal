@@ -3,7 +3,7 @@ const names=['العربية','الشرق للأخبار','سكاي نيوز ع�
 function esc(s=''){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function dateText(d){if(!d)return'';const x=new Date(d);return isNaN(x)?'':x.toLocaleString('ar-SA',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}
 function ensureCountdown(){let el=document.querySelector('#heroCountdown');if(el)return el;el=document.createElement('div');el.id='heroCountdown';el.setAttribute('aria-label','الوقت المتبقي للخبر التالي');el.style.cssText='position:absolute;left:24px;bottom:22px;z-index:9;display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;background:rgba(5,16,30,.82);border:3px solid #ff334d;color:#fff;font-weight:800;font-size:24px;box-shadow:0 0 0 5px rgba(255,51,77,.12);font-variant-numeric:tabular-nums';const hero=heroTitle.closest('.hero')||heroTitle.parentElement;hero.style.position='relative';hero.appendChild(el);return el}
-function paintCountdown(){const el=ensureCountdown();el.textContent=countdown+'ث';el.style.background='conic-gradient(#ff334d '+((heroSeconds-countdown)/heroSeconds*360)+'deg,rgba(5,16,30,.88) 0)';}
+function paintCountdown(){const el=ensureCountdown();el.textContent=countdown+' ث';el.style.background='conic-gradient(#ff334d '+((heroSeconds-countdown)/heroSeconds*360)+'deg,rgba(5,16,30,.88) 0)';}
 function readingSeconds(){return 20}
 function scheduleHero(){clearTimeout(heroTimer);heroTimer=setTimeout(showHero,heroSeconds*1000)}
 let currentAudio=null;
