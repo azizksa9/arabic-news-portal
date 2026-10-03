@@ -24,3 +24,25 @@
 /* Move countdown away from story text */
 #heroCountdown{left:24px!important;top:78px!important;bottom:auto!important}
 @media(max-width:600px){#heroCountdown{left:18px!important;top:76px!important;bottom:auto!important}}
+
+/* Countdown: transparent and directly above the story image */
+#heroCountdown{
+  left:24px!important;
+  top:112px!important;
+  bottom:auto!important;
+  width:54px!important;
+  height:54px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  border:3px solid #ff334d!important;
+}
+@media(max-width:600px){
+  #heroCountdown{
+    left:32px!important;
+    top:106px!important;
+    width:48px!important;
+    height:48px!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+}
