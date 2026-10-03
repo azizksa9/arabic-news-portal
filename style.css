@@ -54,3 +54,29 @@
 /* Final countdown position: fully above image, centered with it */
 #heroCountdown{left:56px!important;top:82px!important}
 @media(max-width:600px){#heroCountdown{left:49px!important;top:78px!important}}
+
+/* Countdown: text only, clearly separated above the story image */
+#heroCountdown{
+  left:56px!important;
+  top:72px!important;
+  width:auto!important;
+  height:auto!important;
+  min-width:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  padding:0!important;
+  color:#fff!important;
+}
+@media(max-width:600px){
+  #heroCountdown{
+    left:58px!important;
+    top:70px!important;
+    width:auto!important;
+    height:auto!important;
+    border:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+}
