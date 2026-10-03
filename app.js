@@ -19,13 +19,13 @@ async function fetchSpeechUrl(text){
 }
 async function playSpeech(text){
   const audio=ensureAudio();currentAudio=audio;
-  if(soundBtn)soundBtn.textContent='1/3 جلب الصوت…';
+  if(soundBtn)soundBtn.textContent='🔊 الصوت يعمل';
   const url=await fetchSpeechUrl(text);
   if(audio.dataset.url)URL.revokeObjectURL(audio.dataset.url);
   audio.dataset.url=url;audio.src=url;audio.load();
-  if(soundBtn)soundBtn.textContent='2/3 جاهز للتشغيل…';
-  audio.onplaying=()=>{if(soundBtn)soundBtn.textContent='🔊 ElevenLabs يعمل'};
-  audio.onended=()=>{if(soundBtn)soundBtn.textContent='✅ انتهت القراءة'};
+  if(soundBtn)soundBtn.textContent='🔊 الصوت يعمل';
+  audio.onplaying=()=>{if(soundBtn)soundBtn.textContent='🔊 الصوت يعمل'};
+  audio.onended=()=>{if(soundBtn)soundBtn.textContent='🔊 الصوت يعمل'};
   audio.onerror=()=>{lastSpokenKey='';if(soundBtn)soundBtn.textContent='⚠️ تعذر تشغيل ملف الصوت'};
   await audio.play();
 }
@@ -42,4 +42,4 @@ function tick(){clock.textContent=new Date().toLocaleTimeString('ar-SA',{hour:'2
 async function load(){try{const r=await fetch('/api/news?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;const data=await r.json();const a=Array.isArray(data)?data:(data.items||[]);if(!Array.isArray(data)&&data.hero&&data.hero.length)headlines=data.hero;const arabia=a.filter(x=>x.source==='العربية'&&x.description&&x.description.trim().split(/\s+/).length>=30).slice(0,8);const others=names.slice(1).map(name=>a.filter(x=>x.source===name&&x.description&&x.description.trim().split(/\s+/).length>=30).slice(0,2));if(!headlines.length)headlines=[];for(let i=0;i<8&&!(data.hero&&data.hero.length);i++){if(arabia[i])headlines.push(arabia[i]);const pool=others[i%others.length];if(pool&&pool[Math.floor(i/others.length)])headlines.push(pool[Math.floor(i/others.length)])}if(!headlines.length)headlines=a.filter(x=>x.source==='العربية').slice(0,3);box.innerHTML=names.map(name=>{const items=a.filter(x=>x.source===name).slice(0,8);const text=items.length?items.map(x=>esc(x.title)).join('　 ◆　 '):'جارٍ تحديث الأخبار…';return '<div class="strip ticker"><b>'+name+'</b><div class="ticker-window"><span>'+text+'</span></div></div>'}).join('');document.querySelector('#updated').textContent='آخر تحديث: '+new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});heroIndex=0;showHero()}catch(e){box.innerHTML=names.map(n=>'<div class="strip ticker"><b>'+n+'</b><div class="ticker-window"><span>جارٍ تحديث الأخبار…</span></div></div>').join('')}}
 const prompts=['تابع الحساب لمتابعة آخر الأخبار','ما الخبر الذي تريد معرفة تفاصيله؟ اكتب في التعليقات','شارك البث مع من يهتم بمتابعة الأخبار'];let promptIndex=0;function rotatePrompt(){const e=document.querySelector('#engage');if(!e)return;e.classList.remove('visible');setTimeout(()=>{e.textContent=prompts[promptIndex++%prompts.length];e.classList.add('visible');setTimeout(()=>e.classList.remove('visible'),7000)},300)}
 tick();setInterval(tick,1000);load();setTimeout(rotatePrompt,8000);setInterval(rotatePrompt,60000);setInterval(load,120000);
-const soundBtn=document.querySelector('#soundBtn');if(soundBtn)soundBtn.addEventListener('click',async()=>{soundEnabled=true;lastSpokenKey='';const audio=ensureAudio();try{audio.muted=false;audio.volume=1;if(currentStory)await speakStory(currentStory.title,'');else soundBtn.textContent='🔊 ElevenLabs جاهز'}catch(e){const reason=(e&&e.message?e.message:'خطأ غير معروف').replace(/\s+/g,' ').slice(0,70);soundBtn.textContent='⚠️ '+reason}});
+const soundBtn=document.querySelector('#soundBtn');if(soundBtn)soundBtn.addEventListener('click',async()=>{soundEnabled=true;lastSpokenKey='';const audio=ensureAudio();try{audio.muted=false;audio.volume=1;if(currentStory)await speakStory(currentStory.title,'');else soundBtn.textContent='🔊 الصوت يعمل'}catch(e){const reason=(e&&e.message?e.message:'خطأ غير معروف').replace(/\s+/g,' ').slice(0,70);soundBtn.textContent='⚠️ '+reason}});
