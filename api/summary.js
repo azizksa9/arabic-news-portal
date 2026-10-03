@@ -83,6 +83,29 @@ async function relatedContext(title){
     return chunks.join(' ');
   }catch{return''}
 }
+async function findOriginalArticle(title){
+  try{
+    const q=encodeURIComponent('site:alarabiya.net '+title.replace(/[#＃]\s*العربية/gi,'').slice(0,180));
+    const r=await fetch('https://www.google.com/search?q='+q,{headers:{'User-Agent':'Mozilla/5.0','Accept-Language':'ar,en;q=0.8'},redirect:'follow',cache:'no-store'});
+    if(!r.ok)return'';
+    const h=await r.text(), links=[];
+    for(const m of h.matchAll(/https?:\/\/(?:www\.)?alarabiya\.net\/[^"&<>\s]+/gi)){
+      let u=m[0].replace(/&amp;.*/,'');
+      try{u=decodeURIComponent(u)}catch{}
+      if(!links.includes(u))links.push(u);
+    }
+    return links.find(u=>/alarabiya\.net\/(arab-and-world|aswaq|saudi-today|last-page|sport|medicine-and-health|technology|variety|politics|international)/i.test(u))||links[0]||'';
+  }catch{return''}
+}
+async function fetchArticleBody(raw,title){
+  try{
+    const target=new URL(raw);if(!/^https?:$/.test(target.protocol))return'';
+    const r=await fetch(target.toString(),{headers:{'User-Agent':'Mozilla/5.0','Accept':'text/html,application/xhtml+xml','Accept-Language':'ar,en;q=0.8'},redirect:'follow',cache:'no-store'});
+    if(!r.ok)return'';
+    const h=await r.text();
+    return articleData(h)||nextDataBody(h,title)||paragraphBody(h,title)||'';
+  }catch{return''}
+}
 async function aiSummary(title,context){
   const key=process.env.OPENAI_API_KEY;if(!key||!context)return'';
   try{
@@ -90,4 +113,16 @@ async function aiSummary(title,context){
     if(!r.ok)return'';const j=await r.json();const direct=String(j.output_text||'').trim();if(direct)return direct;const parts=[];for(const item of (j.output||[])){for(const c of (item.content||[])){if(typeof c.text==='string')parts.push(c.text)}}return parts.join('\n').trim();
   }catch{return''}
 }
-export default async function handler(req){try{const u=new URL(req.url),raw=u.searchParams.get('url')||'',title=u.searchParams.get('title')||'';if(!raw)return Response.json({summary:''});const target=new URL(raw);if(!/^https?:$/.test(target.protocol))return Response.json({summary:''});const r=await fetch(target.toString(),{headers:{'User-Agent':'Mozilla/5.0','Accept':'text/html,application/xhtml+xml'},redirect:'follow',cache:'no-store'});if(!r.ok)return Response.json({summary:''});const h=await r.text();let body=articleData(h)||nextDataBody(h,title)||paragraphBody(h,title);if(!body||body.split(/\s+/).length<35)return Response.json({summary:''});const ai=await aiSummary(title,body);const summary=ai||summarize(title,body);return new Response(JSON.stringify({summary}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, s-maxage=1800, stale-while-revalidate=3600'}})}catch{return Response.json({summary:''})}}
+export default async function handler(req){try{
+  const u=new URL(req.url),raw=u.searchParams.get('url')||'',title=u.searchParams.get('title')||'';
+  if(!title)return Response.json({summary:''});
+  let body='',articleUrl='';
+  if(raw)body=await fetchArticleBody(raw,title);
+  if(!body||body.split(/\s+/).length<35){
+    articleUrl=await findOriginalArticle(title);
+    if(articleUrl)body=await fetchArticleBody(articleUrl,title);
+  }
+  if(!body||body.split(/\s+/).length<35)return Response.json({summary:'',articleUrl});
+  const ai=await aiSummary(title,body),summary=ai||summarize(title,body);
+  return new Response(JSON.stringify({summary,articleUrl}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, s-maxage=1800, stale-while-revalidate=3600'}})
+}catch{return Response.json({summary:''})}}
