@@ -42,7 +42,7 @@ async function updateStorySummary(x,token){
   try{
     const r=await fetch('/api/summary?url='+encodeURIComponent(x.articleUrl||x.url)+'&title='+encodeURIComponent(x.title)+'&v=5',{cache:'no-store'});
     if(!r.ok)return;
-    const data=await r.json(),summary=String(data.summary||'').trim();
+    const data=await r.json(),summary=String(data.summary||'').trim();const dbg='تشخيص: '+String(data.source||'—')+' | OpenAI: '+String(data.aiStatus??'—')+' | الكلمات: '+String(data.bodyWords??0)+' | التطابق: '+String(data.summaryScore??'—');heroMeta.textContent=dbg;
     if(token!==heroSummaryToken||!summary||summary.split(/\s+/).length<20)return;
     heroDesc.textContent=summary;heroDesc.style.display='block';heroDesc.classList.add('show');
   }catch{}
