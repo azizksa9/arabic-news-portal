@@ -113,18 +113,19 @@ function matchScore(title,text=''){
 }
 async function verifiedNewsContext(title){
   try{
-    const q=encodeURIComponent(title.replace(/[#＃]\s*العربية/gi,'').slice(0,180));
+    const clean=title.replace(/[#＃]\s*العربية/gi,'').replace(/["“”]/g,'').trim();
+    const q=encodeURIComponent('"'+clean.slice(0,170)+'"');
     const r=await fetch('https://news.google.com/rss/search?q='+q+'&hl=ar&gl=SA&ceid=SA:ar',{headers:{'User-Agent':'Mozilla/5.0'},cache:'no-store'});
     if(!r.ok)return'';
     const xml=await r.text(),good=[];
     for(const m of xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)){
       const b=m[1],rt=txt((b.match(/<title(?:\s[^>]*)?>([\s\S]*?)<\/title>/i)||[])[1]||''),rd=txt((b.match(/<description(?:\s[^>]*)?>([\s\S]*?)<\/description>/i)||[])[1]||'');
-      const combined=(rt+' '+rd).trim(),score=matchScore(title,combined);
-      if(score>=0.78&&rd.split(/\s+/).length>=10)good.push({score,text:rd,title:rt});
+      const score=matchScore(title,rt);
+      if(score>=0.72&&rd.split(/\s+/).length>=10)good.push({score,text:rd,title:rt});
     }
     good.sort((a,b)=>b.score-a.score);
-    if(good.length<2)return'';
-    return good.slice(0,5).map(x=>x.text).join('\n');
+    if(!good.length)return'';
+    return good.slice(0,3).map(x=>x.title+' — '+x.text).join('\n');
   }catch{return''}
 }
 async function aiSummary(title,context){
@@ -137,13 +138,13 @@ async function aiSummary(title,context){
 export default async function handler(req){try{
   const u=new URL(req.url),raw=u.searchParams.get('url')||'',title=u.searchParams.get('title')||'';
   if(!title)return Response.json({summary:''});
-  let body='',articleUrl='';
-  if(raw)body=await fetchArticleBody(raw,title);
+  let body='',articleUrl='',source='';
+  if(raw){body=await fetchArticleBody(raw,title);if(body)source='provided-article'}
   if(!body||body.split(/\s+/).length<35){
     articleUrl=await findOriginalArticle(title);
-    if(articleUrl)body=await fetchArticleBody(articleUrl,title);
+    if(articleUrl){body=await fetchArticleBody(articleUrl,title);if(body)source='alarabiya-search'}
   }
-  if(!body||body.split(/\s+/).length<35){const verified=await verifiedNewsContext(title);if(verified)body=verified}if(!body||body.split(/\s+/).length<35)return Response.json({summary:'',articleUrl});
-  const ai=await aiSummary(title,body),summary=ai||summarize(title,body);
-  return new Response(JSON.stringify({summary,articleUrl}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, s-maxage=1800, stale-while-revalidate=3600'}})
+  if(!body||body.split(/\s+/).length<35){const verified=await verifiedNewsContext(title);if(verified){body=verified;source='verified-news'}}if(!body||body.split(/\s+/).length<35)return Response.json({summary:'',articleUrl,source:'none'});
+  const ai=await aiSummary(title,body);let summary=ai||summarize(title,body);if(summary&&matchScore(title,summary)<0.38)summary='';
+  return new Response(JSON.stringify({summary,articleUrl,source,ai:!!ai}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, s-maxage=1800, stale-while-revalidate=3600'}})
 }catch{return Response.json({summary:''})}}
