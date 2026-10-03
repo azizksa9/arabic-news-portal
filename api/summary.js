@@ -132,7 +132,7 @@ async function aiSummary(title,context){
   const key=process.env.OPENAI_API_KEY;if(!key||!context)return'';
   try{
     const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'authorization':'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({model:'gpt-5-mini',input:'لخّص الخبر التالي بالعربية في 5 إلى 10 أسطر قصيرة مناسبة لشاشة هاتف. لا تكرر العنوان في البداية. استخدم فقط الوقائع المشتركة أو الواضحة في المادة المتاحة، ولا تضف أي معلومة غير موجودة فيها. إذا وجدت تفاصيل متعارضة فتجاهلها. ركّز على أهم الوقائع والتفاصيل.\n\nالعنوان: '+title+'\n\nالمادة المتاحة: '+context.slice(0,9000),max_output_tokens:450})});
-    if(!r.ok)return'';const j=await r.json();const direct=String(j.output_text||'').trim();if(direct)return direct;const parts=[];for(const item of (j.output||[])){for(const c of (item.content||[])){if(typeof c.text==='string')parts.push(c.text)}}return parts.join('\n').trim();
+    if(!r.ok)return'__AI_ERROR_'+r.status+'__';const j=await r.json();const direct=String(j.output_text||'').trim();if(direct)return direct;const parts=[];for(const item of (j.output||[])){for(const c of (item.content||[])){if(typeof c.text==='string')parts.push(c.text)}}return parts.join('\n').trim();
   }catch{return''}
 }
 export default async function handler(req){try{
@@ -145,6 +145,6 @@ export default async function handler(req){try{
     if(articleUrl){body=await fetchArticleBody(articleUrl,title);if(body)source='alarabiya-search'}
   }
   if(!body||body.split(/\s+/).length<35){const verified=await verifiedNewsContext(title);if(verified){body=verified;source='verified-news'}}if(!body||body.split(/\s+/).length<35)return Response.json({summary:'',articleUrl,source:'none'});
-  const ai=await aiSummary(title,body);let summary=ai||summarize(title,body);if(summary&&matchScore(title,summary)<0.38)summary='';
-  return new Response(JSON.stringify({summary,articleUrl,source,ai:!!ai}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, s-maxage=1800, stale-while-revalidate=3600'}})
+  const aiRaw=await aiSummary(title,body);const aiError=String(aiRaw||'').match(/^__AI_ERROR_(\\d+)__$/);const ai=aiError?'':aiRaw;let summary=ai||summarize(title,body);const score=summary?matchScore(title,summary):0;if(summary&&score<0.38)summary='';
+  return new Response(JSON.stringify({summary,articleUrl,source,ai:!!ai,aiStatus:aiError?Number(aiError[1]):(ai?'ok':'not-used'),bodyWords:body.split(/\\s+/).length,summaryScore:score}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store, max-age=0'}})
 }catch{return Response.json({summary:''})}}
