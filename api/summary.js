@@ -31,4 +31,18 @@ function paragraphBody(h,title=''){
 }
 function norm(s=''){return txt(s).toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim()}
 function summarize(title,body){body=txt(body);if(!body)return'';const t=norm(title),parts=body.match(/[^.!؟\n]+[.!؟]?/g)||[body],out=[];let words=0;for(let p of parts){p=p.trim();if(!p)continue;const n=norm(p);if(!out.length&&t&&(n.includes(t)||t.includes(n)))continue;const wc=p.split(/\s+/).length;if(wc<4)continue;out.push(p);words+=wc;if(out.length>=8||words>=125)break}return out.join(' ').split(/\s+/).slice(0,125).join(' ')}
-export default async function handler(req){try{const u=new URL(req.url),raw=u.searchParams.get('url')||'',title=u.searchParams.get('title')||'';if(!raw)return Response.json({summary:''});const target=new URL(raw);if(!/^https?:$/.test(target.protocol))return Response.json({summary:''});const r=await fetch(target.toString(),{headers:{'User-Agent':'Mozilla/5.0','Accept':'text/html,application/xhtml+xml'},redirect:'follow',cache:'no-store'});if(!r.ok)return Response.json({summary:''});const h=await r.text();let body=articleData(h)||paragraphBody(h,title);if(!body||body.split(/\s+/).length<35)return Response.json({summary:''});return new Response(JSON.stringify({summary:summarize(title,body)}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}catch{return Response.json({summary:''})}}
+async function relatedContext(title){
+  try{
+    const q=encodeURIComponent(title.replace(/[#＃]\s*العربية/gi,'').slice(0,160));
+    const r=await fetch('https://news.google.com/rss/search?q='+q+'&hl=ar&gl=SA&ceid=SA:ar',{headers:{'User-Agent':'Mozilla/5.0'},cache:'no-store'});
+    if(!r.ok)return'';
+    const xml=await r.text(),chunks=[];
+    for(const m of xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)){
+      const b=m[1],d=(b.match(/<description(?:\s[^>]*)?>([\s\S]*?)<\/description>/i)||[])[1]||'';
+      const x=txt(d);if(x&&x.split(/\s+/).length>=12)chunks.push(x);
+      if(chunks.length>=6)break;
+    }
+    return chunks.join(' ');
+  }catch{return''}
+}
+export default async function handler(req){try{const u=new URL(req.url),raw=u.searchParams.get('url')||'',title=u.searchParams.get('title')||'';if(!raw)return Response.json({summary:''});const target=new URL(raw);if(!/^https?:$/.test(target.protocol))return Response.json({summary:''});const r=await fetch(target.toString(),{headers:{'User-Agent':'Mozilla/5.0','Accept':'text/html,application/xhtml+xml'},redirect:'follow',cache:'no-store'});if(!r.ok)return Response.json({summary:''});const h=await r.text();let body=articleData(h)||paragraphBody(h,title);if(!body||body.split(/\s+/).length<55){const ctx=await relatedContext(title);if(ctx.split(/\s+/).length>=35)body=ctx}if(!body||body.split(/\s+/).length<35)return Response.json({summary:''});return new Response(JSON.stringify({summary:summarize(title,body)}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}catch{return Response.json({summary:''})}}
