@@ -5,3 +5,18 @@
 .hero-image{display:none;float:left;width:118px;height:78px;object-fit:cover;margin:2px 0 8px 14px;border-radius:12px;border:1px solid #ffffff22;box-shadow:0 8px 22px #0006;opacity:0;transform:scale(.96);transition:opacity .45s ease,transform .45s ease}
 .hero-image.show{opacity:1;transform:scale(1)}
 @media(max-width:600px){.hero-image{width:92px;height:62px;margin-left:10px;border-radius:10px}}
+
+/* Keep hero text safely inside the card when a story image is present */
+.hero-content{min-height:0;overflow:hidden}
+.hero-title{max-height:4.5em;overflow:hidden}
+.hero-desc{max-height:5.4em}
+.hero-status{overflow:hidden}
+@media(max-width:600px){
+  .hero{padding:14px 16px}
+  .hero-source{margin-bottom:5px}
+  .hero-image{width:82px;height:56px;margin:0 0 6px 10px}
+  .hero-title{font-size:20px;line-height:1.38;max-height:4.14em}
+  .hero-desc{font-size:12px;line-height:1.45;-webkit-line-clamp:2;max-height:2.9em;margin-top:6px}
+  .hero-meta{margin-top:4px}
+  .hero-status{margin-top:3px}
+}
