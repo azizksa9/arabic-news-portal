@@ -84,3 +84,7 @@
 /* Subtle countdown label */
 #heroCountdown{font-size:18px!important;font-weight:800!important;opacity:.88!important}
 @media(max-width:600px){#heroCountdown{font-size:17px!important}}
+
+/* Readable multi-line story summary */
+.hero-desc{display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:5!important;overflow:hidden!important;line-height:1.55!important;max-height:7.75em!important}
+@media(min-width:601px){.hero-desc{-webkit-line-clamp:7!important;max-height:10.85em!important}}
