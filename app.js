@@ -1,5 +1,5 @@
 const box=document.querySelector('#strips');
-const names=['العربية','الإخبارية السعودية','سكاي نيوز عربية','CNN بالعربية','الجزيرة'];
+const names=['العربية','الشرق للأخبار','سكاي نيوز عربية','CNN بالعربية','الجزيرة'];
 function esc(s=''){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 async function load(){try{const r=await fetch('/api/news?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;const a=await r.json();box.innerHTML=names.map(name=>{const items=a.filter(x=>x.source===name).slice(0,8);const text=items.length?items.map(x=>esc(x.title)).join('　 ◆　 '):'جارٍ تحديث الأخبار…';return '<div class="strip ticker"><b>'+name+'</b><div class="ticker-window"><span>'+text+'</span></div></div>'}).join('');document.querySelector('#updated').textContent='آخر تحديث: '+new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}catch(e){box.innerHTML=names.map(n=>'<div class="strip ticker"><b>'+n+'</b><div class="ticker-window"><span>جارٍ تحديث الأخبار…</span></div></div>').join('')}}
 load();setInterval(load,120000);
