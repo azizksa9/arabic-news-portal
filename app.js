@@ -26,7 +26,9 @@ async function speakStory(title='',desc=''){
     await audio.play();
   }catch(e){
     lastSpokenKey='';
-    if(soundBtn)soundBtn.textContent='🔊 اضغط لإعادة المحاولة';
+    const reason=(e&&e.message?e.message:'خطأ غير معروف').replace(/\s+/g,' ').slice(0,70);
+    if(soundBtn)soundBtn.textContent='⚠️ '+reason;
+    console.error('ElevenLabs playback error:',e);
   }
 }
 function showHero(){if(!headlines.length)return;const current=heroIndex%headlines.length,x=headlines[current],next=headlines[(current+1)%headlines.length];const cleanDesc=(x.description||'').replace(/&nbsp;|&#160;|&#xA0;/gi,' ').replace(/\s+/g,' ').trim();heroSeconds=readingSeconds(x.title,cleanDesc);countdown=heroSeconds;paintCountdown();heroTitle.classList.remove('show');heroDesc.classList.remove('show');setTimeout(()=>{heroSource.textContent=x.source;heroTitle.textContent=x.title;const d=cleanDesc;heroDesc.textContent=d;heroDesc.style.display=d?'block':'none';heroMeta.textContent=dateText(x.date);const pos=document.querySelector('#heroPosition'),nxt=document.querySelector('#nextStory');if(pos)pos.textContent=(current+1)+' / '+headlines.length;if(nxt)nxt.textContent='التالي: '+(next?.title||'خبر جديد');heroTitle.classList.add('show');if(d)heroDesc.classList.add('show');heroIndex++;currentStory={title:x.title,desc:''};speakStory(x.title,'');scheduleHero()},300)}
