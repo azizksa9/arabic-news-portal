@@ -120,7 +120,7 @@ async function verifiedNewsContext(title){
     for(const m of xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)){
       const b=m[1],rt=txt((b.match(/<title(?:\s[^>]*)?>([\s\S]*?)<\/title>/i)||[])[1]||''),rd=txt((b.match(/<description(?:\s[^>]*)?>([\s\S]*?)<\/description>/i)||[])[1]||'');
       const combined=(rt+' '+rd).trim(),score=matchScore(title,combined);
-      if(score>=0.55&&rd.split(/\s+/).length>=10)good.push({score,text:rd});
+      if(score>=0.78&&rd.split(/\s+/).length>=10)good.push({score,text:rd,title:rt});
     }
     good.sort((a,b)=>b.score-a.score);
     if(good.length<2)return'';
