@@ -21,13 +21,16 @@ async function fetchSpeechBuffer(text){
 }
 async function playSpeech(text){
   const ctx=audioCtx||unlockAudio();
+  if(soundBtn)soundBtn.textContent='1/4 جلب الصوت…';
   const bytes=await fetchSpeechBuffer(text);
+  if(soundBtn)soundBtn.textContent='2/4 استلام الملف…';
   const decoded=await ctx.decodeAudioData(bytes.slice(0));
+  if(soundBtn)soundBtn.textContent='3/4 فك الصوت…';
   if(currentAudio){try{currentAudio.stop()}catch{}currentAudio=null}
   const src=ctx.createBufferSource();currentAudio=src;src.buffer=decoded;src.connect(ctx.destination);
-  src.onended=()=>{if(currentAudio===src)currentAudio=null;if(soundBtn)soundBtn.textContent='🔊 ElevenLabs يعمل'};
+  src.onended=()=>{if(currentAudio===src)currentAudio=null;if(soundBtn)soundBtn.textContent='✅ انتهت القراءة'};
   src.start(0);
-  if(soundBtn)soundBtn.textContent='🔊 ElevenLabs يعمل';
+  if(soundBtn)soundBtn.textContent='4/4 بدأ التشغيل 🔊';
 }
 async function speakStory(title='',desc=''){
   if(!soundEnabled)return;
