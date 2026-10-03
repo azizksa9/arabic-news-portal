@@ -3,7 +3,45 @@ function dec(s=''){let x=s.replace(/<!\[CDATA\[|\]\]>/g,'');for(let i=0;i<3;i++)
 function txt(s=''){return dec(s).replace(/<[^>]+>/g,' ').replace(/&[a-zA-Z0-9#]+;/g,' ').replace(/\s+/g,' ').trim()}
 function meta(h,key){const tags=h.match(/<meta\b[^>]*>/gi)||[];for(const t of tags){const k=(t.match(/(?:property|name)=["']([^"']+)["']/i)||[])[1];if(k!==key)continue;const v=(t.match(/content=["']([^"']*)["']/i)||[])[1];if(v)return txt(v)}return''}
 function objects(v,out=[]){if(!v||typeof v!=='object')return out;if(Array.isArray(v)){v.forEach(x=>objects(x,out));return out}out.push(v);Object.values(v).forEach(x=>objects(x,out));return out}
-function articleData(h){for(const m of h.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)){try{for(const o of objects(JSON.parse(m[1]))){if(o&&(o.articleBody||o.description)){const body=txt(o.articleBody||o.description);if(body.split(/\s+/).length>=25)return body}}}catch{}}return''}
+function articleData(h){
+  let best='';
+  for(const m of h.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)){
+    try{
+      for(const o of objects(JSON.parse(m[1]))){
+        if(!o)continue;
+        const type=String(o['@type']||'');
+        const raw=o.articleBody||((/NewsArticle|Article|ReportageNewsArticle/i.test(type))?o.description:'')||'';
+        const body=txt(raw);
+        if(body.split(/\s+/).length>best.split(/\s+/).length)best=body;
+      }
+    }catch{}
+  }
+  return best.split(/\s+/).length>=25?best:''
+}
+function nextDataBody(h,title=''){
+  const m=h.match(/<script[^>]+id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
+  if(!m)return'';
+  try{
+    const root=JSON.parse(m[1]), candidates=[];
+    for(const o of objects(root)){
+      for(const k of ['articleBody','body','content','description','text']){
+        if(typeof o?.[k]==='string'){
+          const v=txt(o[k]),wc=v.split(/\s+/).length;
+          if(wc>=35&&wc<=4000)candidates.push(v);
+        }
+      }
+    }
+    const tw=norm(title).split(/\s+/).filter(w=>w.length>=4).slice(0,10);
+    candidates.sort((a,b)=>{
+      const score=x=>tw.filter(w=>norm(x).includes(w)).length*100+Math.min(x.split(/\s+/).length,500);
+      return score(b)-score(a)
+    });
+    const best=candidates[0]||'';
+    if(!best)return'';
+    const hits=tw.filter(w=>norm(best).includes(w)).length;
+    return !tw.length||hits>=Math.min(2,tw.length)?best:''
+  }catch{return''}
+}
 function paragraphBody(h,title=''){
   const zones=[];
   for(const re of [/<article\b[^>]*>([\s\S]*?)<\/article>/gi,/<main\b[^>]*>([\s\S]*?)<\/main>/gi]){
@@ -52,4 +90,4 @@ async function aiSummary(title,context){
     if(!r.ok)return'';const j=await r.json();const direct=String(j.output_text||'').trim();if(direct)return direct;const parts=[];for(const item of (j.output||[])){for(const c of (item.content||[])){if(typeof c.text==='string')parts.push(c.text)}}return parts.join('\n').trim();
   }catch{return''}
 }
-export default async function handler(req){try{const u=new URL(req.url),raw=u.searchParams.get('url')||'',title=u.searchParams.get('title')||'';if(!raw)return Response.json({summary:''});const target=new URL(raw);if(!/^https?:$/.test(target.protocol))return Response.json({summary:''});const r=await fetch(target.toString(),{headers:{'User-Agent':'Mozilla/5.0','Accept':'text/html,application/xhtml+xml'},redirect:'follow',cache:'no-store'});if(!r.ok)return Response.json({summary:''});const h=await r.text();let body=articleData(h)||paragraphBody(h,title);if(!body||body.split(/\s+/).length<35)return Response.json({summary:''});const ai=await aiSummary(title,body);const summary=ai||summarize(title,body);return new Response(JSON.stringify({summary}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, s-maxage=1800, stale-while-revalidate=3600'}})}catch{return Response.json({summary:''})}}
+export default async function handler(req){try{const u=new URL(req.url),raw=u.searchParams.get('url')||'',title=u.searchParams.get('title')||'';if(!raw)return Response.json({summary:''});const target=new URL(raw);if(!/^https?:$/.test(target.protocol))return Response.json({summary:''});const r=await fetch(target.toString(),{headers:{'User-Agent':'Mozilla/5.0','Accept':'text/html,application/xhtml+xml'},redirect:'follow',cache:'no-store'});if(!r.ok)return Response.json({summary:''});const h=await r.text();let body=articleData(h)||nextDataBody(h,title)||paragraphBody(h,title);if(!body||body.split(/\s+/).length<35)return Response.json({summary:''});const ai=await aiSummary(title,body);const summary=ai||summarize(title,body);return new Response(JSON.stringify({summary}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, s-maxage=1800, stale-while-revalidate=3600'}})}catch{return Response.json({summary:''})}}
