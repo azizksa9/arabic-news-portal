@@ -1,6 +1,7 @@
 export const config={runtime:'edge'};
-const FEED='https://www.alarabiya.net/.mrss/ar.xml';
+const FEED='https://news.google.com/rss/search?q=site%3Aalarabiya.net&hl=ar&gl=SA&ceid=SA%3Aar';
 function dec(s=''){return s.replace(/<!\[CDATA\[|\]\]>/g,'').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>')}
 function tag(b,n){const m=b.match(new RegExp('<'+n+'(?:\\s[^>]*)?>([\\s\\S]*?)<\\/'+n+'>','i'));return m?dec(m[1].trim()):''}
-function parse(xml){return[...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)].slice(0,30).map(x=>x[1]).map(b=>({title:tag(b,'title').replace(/<[^>]+>/g,''),url:tag(b,'link').replace(/<[^>]+>/g,''),source:'العربية',category:'أخبار',date:tag(b,'pubDate')})).filter(x=>x.title)}
-export default async function handler(){try{const r=await fetch(FEED,{headers:{'User-Agent':'Mozilla/5.0'},cache:'no-store'});if(!r.ok)throw new Error('feed');const a=parse(await r.text());return new Response(JSON.stringify(a),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, s-maxage=120'}})}catch(e){return new Response(JSON.stringify([]),{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}}
+function cleanTitle(t){return t.replace(/<[^>]+>/g,'').replace(/\s+-\s+العربية\s*$/,'').trim()}
+function parse(xml){return[...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)].slice(0,25).map(x=>x[1]).map(b=>({title:cleanTitle(tag(b,'title')),url:tag(b,'link'),source:'العربية',category:'أخبار',date:tag(b,'pubDate')})).filter(x=>x.title)}
+export default async function handler(){try{const r=await fetch(FEED,{headers:{'User-Agent':'Mozilla/5.0'},cache:'no-store'});if(!r.ok)throw new Error('feed');const a=parse(await r.text());if(!a.length)throw new Error('empty');return new Response(JSON.stringify(a),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, s-maxage=120'}})}catch(e){return new Response(JSON.stringify([]),{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}})}}
