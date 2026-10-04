@@ -136,7 +136,7 @@ async function aiSummary(title,context){
   }catch{return''}
 }
 export default async function handler(req){try{
-  const u=new URL(req.url),raw=u.searchParams.get('url')||'',title=u.searchParams.get('title')||'';
+  const u=new URL(req.url),raw=u.searchParams.get('url')||'',title=u.searchParams.get('title')||'',feedDesc=txt(u.searchParams.get('desc')||'');
   if(!title)return Response.json({summary:''});
   let body='',articleUrl='',source='';
   if(raw){body=await fetchArticleBody(raw,title);if(body)source='provided-article'}
@@ -144,7 +144,9 @@ export default async function handler(req){try{
     articleUrl=await findOriginalArticle(title);
     if(articleUrl){body=await fetchArticleBody(articleUrl,title);if(body)source='alarabiya-search'}
   }
-  if(!body||body.split(/\s+/).length<35){const verified=await verifiedNewsContext(title);if(verified){body=verified;source='verified-news'}}if(!body||body.split(/\s+/).length<35)return Response.json({summary:'',articleUrl,source:'none',ai:false,aiStatus:'not-used',bodyWords:body?body.split(/\\s+/).length:0,summaryScore:0,reason:'no-matching-article-content'});
+  if(!body||body.split(/\s+/).length<35){const verified=await verifiedNewsContext(title);if(verified){body=verified;source='verified-news'}}
+  if((!body||body.split(/\s+/).length<35)&&feedDesc&&matchScore(title,title+' '+feedDesc)>=0.38){body=(title+'\n'+feedDesc);source='feed-description'}
+  if(!body||body.split(/\s+/).length<12)return Response.json({summary:'',articleUrl,source:'none',ai:false,aiStatus:'not-used',bodyWords:body?body.split(/\s+/).length:0,summaryScore:0,reason:'no-matching-article-content'});
   const aiRaw=await aiSummary(title,body);const aiError=String(aiRaw||'').match(/^__AI_ERROR_(\\d+)__$/);const ai=aiError?'':aiRaw;let summary=ai||summarize(title,body);const score=summary?matchScore(title,summary):0;if(summary&&score<0.38)summary='';
   return new Response(JSON.stringify({summary,articleUrl,source,ai:!!ai,aiStatus:aiError?Number(aiError[1]):(ai?'ok':'not-used'),bodyWords:body.split(/\\s+/).length,summaryScore:score}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store, max-age=0'}})
 }catch{return Response.json({summary:''})}}
