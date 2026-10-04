@@ -156,3 +156,15 @@ html.live-mode .strip{height:auto;min-height:6.6vh;font-size:clamp(15px,1.91vh,2
 html.live-mode .strip b{min-width:15.2vh;max-width:180px;font-size:clamp(12px,1.58vh,18px)}
 html.live-mode .site-footer{font-size:clamp(8px,.96vh,11px)}
 html.live-mode #heroCountdown{left:6.75vh!important;top:8.4vh!important;font-size:clamp(16px,2.03vh,22px)!important}
+
+
+/* Arabic typography refinement v2 for TikTok LIVE */
+html.live-mode body,html.live-mode .screen{font-family:Tahoma,"Segoe UI",Arial,sans-serif}
+html.live-mode .brand-title{font-weight:700;line-height:1.3}
+html.live-mode .hero-title{font-weight:700;line-height:1.5;letter-spacing:0;word-spacing:.04em;word-break:normal;overflow-wrap:normal}
+html.live-mode .hero-desc{font-weight:400;line-height:1.72!important;letter-spacing:0;word-spacing:.03em}
+html.live-mode .hero-source,html.live-mode .hero-badge,html.live-mode #soundBtn,html.live-mode .ticker-head{font-weight:700}
+html.live-mode .strip{font-weight:600;overflow:hidden}
+html.live-mode .strip b{font-weight:700;line-height:1.35;white-space:normal;text-align:center;padding-inline:.7vh}
+html.live-mode .ticker-window{min-width:0;overflow:hidden}
+html.live-mode .ticker-window span{font-weight:600;line-height:1.5;white-space:nowrap;padding-inline:1vh}
