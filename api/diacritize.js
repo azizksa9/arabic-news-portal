@@ -6,11 +6,11 @@ export default async function handler(req){
   const b=await req.json(),original=String(b?.text||'').replace(/\s+/g,' ').trim().slice(0,500);
   if(!original)return Response.json({text:''});
   const key=process.env.OPENAI_API_KEY;if(!key)return Response.json({text:original});
-  const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{authorization:'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({model:'gpt-5-mini',input:'أضف التشكيل العربي المناسب إلى النص الآتي لتحسين النطق. ممنوع تغيير أي كلمة أو ترتيب أو رقم أو علامة ترقيم، وممنوع الشرح أو إعادة الصياغة. أعد النص نفسه فقط بعد إضافة الحركات. في الأسماء الأجنبية حافظ على الحروف نفسها واضبطها بما يساعد على النطق العربي.\n\n'+original,max_output_tokens:700})});
-  if(!r.ok)return Response.json({text:original});
+  const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{authorization:'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({model:'gpt-5-mini',input:'أضف التشكيل العربي المناسب إلى النص الآتي لتحسين النطق. ممنوع تغيير أي كلمة أو ترتيب أو رقم أو علامة ترقيم، وممنوع الشرح أو إعادة الصياغة. أعد النص نفسه فقط بعد إضافة الحركات. في الأسماء الأجنبية حافظ على الحروف نفسها واضبطها بما يساعد على النطق العربي.\n\n'+original,max_output_tokens:700,reasoning:{effort:'minimal'},text:{verbosity:'low'}})});
+  if(!r.ok){const detail=await r.text();return Response.json({text:original,debug:'openai_'+r.status,detail:detail.slice(0,160)})}
   const j=await r.json();let out=String(j.output_text||j.output?.[0]?.content?.[0]?.text||'').trim();
   if(!out){const p=[];for(const i of (j.output||[]))for(const c of (i.content||[]))if(typeof c.text==='string')p.push(c.text);out=p.join('').trim()}
-  const a=comparable(original),z=comparable(out);if(!out||a!==z)return Response.json({text:original});
+  const a=comparable(original),z=comparable(out);if(!out)return Response.json({text:original,debug:'empty_output'});if(a!==z)return Response.json({text:original,debug:'validation_mismatch',candidate:out});
   return new Response(JSON.stringify({text:out,ok:true}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, max-age=86400'}});
  }catch{return Response.json({text:''})}
 }
