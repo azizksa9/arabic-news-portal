@@ -88,9 +88,16 @@ const prompts=['تابع الحساب لمتابعة آخر الأخبار','م�
 tick();setInterval(tick,1000);load();setTimeout(rotatePrompt,8000);setInterval(rotatePrompt,60000);setInterval(load,60000);
 const soundBtn=document.querySelector('#soundBtn');if(soundBtn)soundBtn.addEventListener('click',async()=>{soundEnabled=true;lastSpokenKey='';const audio=ensureAudio();try{audio.muted=false;audio.volume=1;if(currentStory)await speakStory(currentStory.title,'');else soundBtn.textContent='🔊 الصوت يعمل'}catch(e){const reason=(e&&e.message?e.message:'خطأ غير معروف').replace(/\s+/g,' ').slice(0,70);soundBtn.textContent='⚠️ '+reason}});
 
-const PROMO_LINKS=['https://vt.tiktok.com/ZSbSSJcT6/','https://vt.tiktok.com/ZSbSS5oYL/','https://vt.tiktok.com/ZSbSSVFxq/'];let promoActive=false,lastPromo=-1,promoFallback=null;
-function pickPromo(){let i=Math.floor(Math.random()*PROMO_LINKS.length);if(i===lastPromo)i=(i+1)%PROMO_LINKS.length;lastPromo=i;return i}
-function endPromo(){promoActive=false;if(promoFallback){clearTimeout(promoFallback);promoFallback=null}const o=document.querySelector('#promoOverlay'),f=document.querySelector('#promoFrame');if(f)f.innerHTML='';if(o){o.classList.remove('show');o.setAttribute('aria-hidden','true')}}
-async function startPromo(){if(promoActive)return;promoActive=true;if(currentAudio){try{currentAudio.pause()}catch{}}const o=document.querySelector('#promoOverlay'),f=document.querySelector('#promoFrame');if(!o||!f){promoActive=false;return}o.classList.add('show');o.setAttribute('aria-hidden','false');f.innerHTML='<div style="color:white;text-align:center;padding-top:35vh">جارٍ تجهيز الفيديو…</div>';try{const link=PROMO_LINKS[pickPromo()],r=await fetch('/api/tiktok?url='+encodeURIComponent(link),{cache:'no-store'}),j=await r.json();if(!r.ok||!j.embed)throw new Error(j.error||'embed');f.innerHTML='<iframe id="promoPlayer" src="'+j.embed+'" allow="autoplay; encrypted-media; fullscreen" allowfullscreen playsinline></iframe>';promoFallback=setTimeout(endPromo,120000)}catch(e){f.innerHTML='<div style="color:white;text-align:center;padding:30vh 20px">تعذر تشغيل الفيديو. ستعود الأخبار الآن.</div>';setTimeout(endPromo,2500)}}
-window.addEventListener('message',e=>{if(!promoActive)return;const d=e.data||{};if(d.type==='onStateChange'&&(d.value===0||d.value==='ended'))endPromo();if(d.event==='ended'||d.type==='ended')endPromo()});
-document.querySelector('#promoClose')?.addEventListener('click',endPromo);setTimeout(startPromo,60*1000);setInterval(startPromo,60*1000);
+const PROMO_VIDEOS=[
+  'https://res.cloudinary.com/v2akwa5p/video/upload/v14044g50000d9fit2fog65nj20um6ag.mp4',
+  'https://res.cloudinary.com/v2akwa5p/video/upload/v14044g50000d9m5op7og65k3m71aj7g.mp4'
+];
+const PROMO_INTERVAL=60*1000;
+let promoActive=false,lastPromo=-1,promoTimer=null;
+function pickPromo(){let i=Math.floor(Math.random()*PROMO_VIDEOS.length);if(PROMO_VIDEOS.length>1&&i===lastPromo)i=(i+1)%PROMO_VIDEOS.length;lastPromo=i;return i}
+function schedulePromo(ms=PROMO_INTERVAL){if(promoTimer)clearTimeout(promoTimer);promoTimer=setTimeout(startPromo,ms)}
+function endPromo(){if(!promoActive)return;promoActive=false;const o=document.querySelector('#promoOverlay'),f=document.querySelector('#promoFrame'),v=document.querySelector('#promoVideo');if(v){try{v.pause()}catch{}}if(f)f.innerHTML='';if(o){o.classList.remove('show');o.setAttribute('aria-hidden','true')}schedulePromo()}
+async function startPromo(){if(promoActive)return;promoActive=true;if(promoTimer){clearTimeout(promoTimer);promoTimer=null}if(currentAudio){try{currentAudio.pause()}catch{}}const o=document.querySelector('#promoOverlay'),f=document.querySelector('#promoFrame');if(!o||!f){promoActive=false;schedulePromo();return}o.classList.add('show');o.setAttribute('aria-hidden','false');const src=PROMO_VIDEOS[pickPromo()];f.innerHTML='<video id="promoVideo" src="'+src+'" autoplay playsinline controls preload="auto" style="width:100%;height:100%;object-fit:contain;background:#000"></video>';const v=document.querySelector('#promoVideo');if(!v){endPromo();return}v.addEventListener('ended',endPromo,{once:true});v.addEventListener('error',()=>{f.innerHTML='<div style="color:white;text-align:center;padding:30vh 20px">تعذر تشغيل الفيديو. ستعود الأخبار الآن.</div>';setTimeout(endPromo,2500)},{once:true});try{await v.play()}catch(e){v.muted=true;try{await v.play()}catch{}}}
+document.querySelector('#promoClose')?.addEventListener('click',endPromo);
+schedulePromo(60*1000);
+
