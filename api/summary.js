@@ -146,7 +146,7 @@ export default async function handler(req){try{
   }
   if(!body||body.split(/\s+/).length<35){const verified=await verifiedNewsContext(title);if(verified){body=verified;source='verified-news'}}
   if((!body||body.split(/\s+/).length<35)&&feedDesc&&matchScore(title,title+' '+feedDesc)>=0.38){body=(title+'\n'+feedDesc);source='feed-description'}
-  if(!body||body.split(/\s+/).length<12)return Response.json({summary:'',articleUrl,source:'none',ai:false,aiStatus:'not-used',bodyWords:body?body.split(/\s+/).length:0,summaryScore:0,reason:'no-matching-article-content'});
+  if(!body||body.split(/\s+/).length<12){const safe=feedDesc&&feedDesc.split(/\s+/).length>=5?feedDesc:'';return Response.json({summary:safe,articleUrl,source:safe?'feed-description':'none',ai:false,aiStatus:'not-used',bodyWords:body?body.split(/\s+/).length:0,summaryScore:safe?1:0,reason:safe?'feed-fallback':'no-matching-article-content'});}
   const aiRaw=await aiSummary(title,body);const aiError=String(aiRaw||'').match(/^__AI_ERROR_(\\d+)__$/);const ai=aiError?'':aiRaw;let summary=ai||summarize(title,body);const score=summary?matchScore(title,summary):0;if(summary&&score<0.38)summary='';
   return new Response(JSON.stringify({summary,articleUrl,source,ai:!!ai,aiStatus:aiError?Number(aiError[1]):(ai?'ok':'not-used'),bodyWords:body.split(/\\s+/).length,summaryScore:score}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store, max-age=0'}})
 }catch{return Response.json({summary:''})}}
