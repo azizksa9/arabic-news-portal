@@ -50,15 +50,19 @@ async function enrichStories(list){
   return out;
 }
 async function directArabia(){
-  const url='https://news.google.com/rss/search?q='+encodeURIComponent('site:alarabiya.net')+'&hl=ar&gl=SA&ceid=SA:ar';
+  const feed='https://alikhbariya.net/feeds/sources/8f2e43a8-7327-4b8e-b95d-dea2a728ca4a.xml';
   try{
-    const r=await fetch(url,{headers:{'User-Agent':'Mozilla/5.0'},cache:'no-store'});
+    const r=await fetch(feed,{headers:{'User-Agent':'Mozilla/5.0'},cache:'no-store'});
     if(!r.ok)return{found:[],linkCount:0,feedStatus:r.status};
     const xml=await r.text(),found=[];
     for(const m of xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)){
-      const b=m[1],rawTitle=txt(tag(b,'title')),title=rawTitle.replace(/\s+-\s+العربية\s*$/,'').trim();
-      const link=tag(b,'link'),raw=txt(tag(b,'description')),summary=usefulSummary(title,raw);
-      if(title&&link)found.push({title,description:summary||raw,url:link,articleUrl:link,image:imageFromItem(b),source:'العربية',date:tag(b,'pubDate')});
+      const item=m[1],title=txt(tag(item,'title')).replace(/\s*[#＃]\s*العربية\s*$/,'').trim();
+      const link=tag(item,'link'),guid=txt(tag(item,'guid'));
+      const sourceTag=(item.match(/<source\b[^>]*url=["']([^"']+)["'][^>]*>/i)||[])[1]||'';
+      const raw=tag(item,'description'),description=usefulSummary(title,raw)||txt(raw);
+      const image=imageFromItem(item);
+      const articleUrl=(/^https?:\/\//i.test(guid)?guid:(sourceTag&&sourceTag!==A?sourceTag:link));
+      if(title)found.push({title,description,url:link||articleUrl,articleUrl,image,source:'العربية',date:tag(item,'pubDate')});
       if(found.length>=50)break;
     }
     const seen=new Set(),unique=found.filter(x=>{const k=normTitle(x.title);if(!k||seen.has(k))return false;seen.add(k);return true});
