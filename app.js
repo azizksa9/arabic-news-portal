@@ -35,7 +35,7 @@ async function speakStory(title='',desc=''){
   if(!text||text===lastSpokenKey)return;
   lastSpokenKey=text;
   try{await playSpeech(text)}
-  catch(e){lastSpokenKey='';const reason=(e&&e.message?e.message:'خطأ غير معروف').replace(/\s+/g,' ').slice(0,70);if(soundBtn)soundBtn.textContent='⚠️ '+reason};speechSynthesis.speak(u);return}}catch{}if(soundBtn)soundBtn.textContent='⚠️ تعذر تشغيل الصوت'}
+  catch(e){lastSpokenKey='';const reason=(e&&e.message?e.message:'خطأ غير معروف').replace(/\s+/g,' ').slice(0,70);if(soundBtn)soundBtn.textContent='⚠️ '+reason}
 }
 async function updateStorySummary(x,token){
   const summary=await fetchSummary(x);
