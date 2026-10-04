@@ -43,7 +43,7 @@ async function updateStorySummary(x,token){
     const r=await fetch('/api/summary?url='+encodeURIComponent(x.articleUrl||x.url)+'&title='+encodeURIComponent(x.title)+'&desc='+encodeURIComponent(x.description||'')+'&v=6',{cache:'no-store'});
     if(!r.ok)return;
     const data=await r.json(),summary=String(data.summary||'').trim();
-    if(token!==heroSummaryToken||!summary||summary.split(/\s+/).length<20)return;
+    if(token!==heroSummaryToken||!summary)return;
     heroDesc.textContent=summary;heroDesc.style.display='block';heroDesc.classList.add('show');
   }catch{}
 }
