@@ -108,3 +108,28 @@
  .strip{height:6.15vh}
  #heroCountdown{left:64px!important;top:72px!important;font-size:16px!important}
 }
+
+
+/* TikTok LIVE / portrait viewport: fill the full 9:16 canvas */
+@media (orientation:portrait), (max-aspect-ratio:3/4){
+ html,body{width:100%;height:100%;min-height:100dvh;overflow:hidden}
+ .screen{width:100vw;max-width:none;height:100dvh;margin:0;padding:.7vh 2.5vw .35vh;gap:.42vh}
+ .brand{height:6.2vh;padding:0 1vw}
+ .brand-title{font-size:clamp(25px,6.5vw,42px)}
+ .brand-sub{font-size:clamp(7px,1.8vw,11px)}
+ .live-pill{font-size:clamp(10px,2.5vw,15px)}
+ .hero{height:48vh;min-height:0;padding:clamp(14px,3vw,24px);border-radius:18px}
+ .hero-top{min-height:4.5vh}
+ .hero-content{flex:1;padding-top:.4vh}
+ .hero-source{font-size:clamp(13px,3vw,20px)}
+ .hero-title{font-size:clamp(24px,5.6vw,38px);line-height:1.38;max-width:100%;max-height:5.6em}
+ .hero-desc{font-size:clamp(14px,3.15vw,21px)!important;line-height:1.55!important;max-width:100%;-webkit-line-clamp:6!important;max-height:9.3em!important}
+ .hero-image{width:22vw;height:14vw;max-width:145px;max-height:95px}
+ .hero-meta,.hero-status,.hero-foot{font-size:clamp(9px,2vw,13px)}
+ .ticker-head{height:4.2vh;font-size:clamp(16px,3.5vw,24px)}
+ .strips{flex:1;gap:.5vh}
+ .strip{height:auto;min-height:6.6vh;font-size:clamp(15px,3.4vw,23px)}
+ .strip b{min-width:27vw;max-width:180px;font-size:clamp(12px,2.8vw,18px)}
+ .site-footer{font-size:clamp(8px,1.7vw,11px)}
+ #heroCountdown{left:12vw!important;top:8.4vh!important;font-size:clamp(16px,3.6vw,22px)!important}
+}
