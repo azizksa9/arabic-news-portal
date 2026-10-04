@@ -30,12 +30,12 @@ async function playSpeech(text){
   await audio.play();
 }
 async function speakStory(title='',desc=''){
-  if(!soundEnabled)return;
+  if(!soundEnabled||promoActive)return;
   const text=String(title||'').replace(/\s*[#＃]\s*(العربية|Al Arabiya)\s*$/i,'').replace(/\s*[-–—|]\s*(العربية|Al Arabiya)\s*$/i,'').replace(/\s+(العربية)\s*$/,'').replace(/\s+/g,' ').trim();
   if(!text||text===lastSpokenKey)return;
   lastSpokenKey=text;
   try{await playSpeech(text)}
-  catch(e){lastSpokenKey='';try{if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ar-SA';u.rate=.9;const vs=speechSynthesis.getVoices();u.voice=vs.find(v=>/^ar(-|_)/i.test(v.lang)&&/Saudi|Majed|Maged|Arabic/i.test(v.name))||vs.find(v=>/^ar(-|_)/i.test(v.lang))||null;u.onstart=()=>{if(soundBtn)soundBtn.textContent='🔊 الصوت يعمل'};u.onerror=()=>{if(soundBtn)soundBtn.textContent='⚠️ تعذر تشغيل الصوت'};speechSynthesis.speak(u);return}}catch{}if(soundBtn)soundBtn.textContent='⚠️ تعذر تشغيل الصوت'}
+  catch(e){lastSpokenKey='';if(soundBtn)soundBtn.textContent='⚠️ تعذر تشغيل الصوت'};speechSynthesis.speak(u);return}}catch{}if(soundBtn)soundBtn.textContent='⚠️ تعذر تشغيل الصوت'}
 }
 async function updateStorySummary(x,token){
   const summary=await fetchSummary(x);
@@ -81,7 +81,7 @@ async function warmFirstStories(count=6){
   await Promise.race([work,timeout]);
 }
 let heroSummaryToken=0;
-function showHero(){if(!headlines.length)return;const current=heroIndex%headlines.length,x=headlines[current],next=headlines[(current+1)%headlines.length];const cleanDesc=(x.description||'').replace(/&nbsp;|&#160;|&#xA0;/gi,' ').replace(/\s+/g,' ').trim();heroSeconds=readingSeconds(x.title,cleanDesc);countdown=heroSeconds;paintCountdown();heroTitle.classList.remove('show');heroDesc.classList.remove('show');setTimeout(()=>{heroSource.textContent=x.source;if(heroImage){heroImage.classList.remove('show');if(x.image){heroImage.onload=()=>{heroImage.style.display='block';setTimeout(()=>heroImage.classList.add('show'),40)};heroImage.onerror=()=>{heroImage.removeAttribute('src');heroImage.style.display='none'};heroImage.src='/api/image?url='+encodeURIComponent(x.image)}else{heroImage.removeAttribute('src');heroImage.style.display='none'}}heroTitle.textContent=x.title;vocalizeTitle(x.title).then(v=>{if(heroTitle.textContent===x.title){heroTitle.textContent=v;if(currentStory&&currentStory.rawTitle===x.title){currentStory.title=v}}});const titleNorm=String(x.title||'').replace(/[^\p{L}\p{N}]+/gu,' ').trim().toLowerCase();const descNorm=cleanDesc.replace(/[^\p{L}\p{N}]+/gu,' ').trim().toLowerCase();const validDesc=cleanDesc&&cleanDesc.split(/\s+/).length>=12&&descNorm!==titleNorm&&!descNorm.startsWith(titleNorm)&&!titleNorm.startsWith(descNorm);const d=validDesc?cleanDesc:'';heroDesc.textContent=d;heroDesc.style.display=d?'block':'none';heroMeta.textContent=dateText(x.date);const pos=document.querySelector('#heroPosition'),nxt=document.querySelector('#nextStory');if(pos)pos.textContent=(current+1)+' / '+headlines.length;if(nxt)nxt.textContent='التالي: '+(next?.title||'خبر جديد');heroTitle.classList.add('show');if(d)heroDesc.classList.add('show');const summaryToken=++heroSummaryToken;const cached=summaryCache.get(storyKey(x));if(cached){heroDesc.textContent=cached;heroDesc.style.display='block';heroDesc.classList.add('show')}else updateStorySummary(x,summaryToken);prefetchUpcoming(current+1,6);heroIndex++;currentStory={title:x.title,rawTitle:x.title,desc:''};vocalizeTitle(x.title).then(v=>{if(currentStory&&currentStory.rawTitle===x.title)currentStory.title=v;speakStory(v,'')});scheduleHero()},300)}
+function showHero(){if(promoActive){scheduleHero();return}if(!headlines.length)return;const current=heroIndex%headlines.length,x=headlines[current],next=headlines[(current+1)%headlines.length];const cleanDesc=(x.description||'').replace(/&nbsp;|&#160;|&#xA0;/gi,' ').replace(/\s+/g,' ').trim();heroSeconds=readingSeconds(x.title,cleanDesc);countdown=heroSeconds;paintCountdown();heroTitle.classList.remove('show');heroDesc.classList.remove('show');setTimeout(()=>{heroSource.textContent=x.source;if(heroImage){heroImage.classList.remove('show');if(x.image){heroImage.onload=()=>{heroImage.style.display='block';setTimeout(()=>heroImage.classList.add('show'),40)};heroImage.onerror=()=>{heroImage.removeAttribute('src');heroImage.style.display='none'};heroImage.src='/api/image?url='+encodeURIComponent(x.image)}else{heroImage.removeAttribute('src');heroImage.style.display='none'}}heroTitle.textContent=x.title;vocalizeTitle(x.title).then(v=>{if(heroTitle.textContent===x.title){heroTitle.textContent=v;if(currentStory&&currentStory.rawTitle===x.title){currentStory.title=v}}});const titleNorm=String(x.title||'').replace(/[^\p{L}\p{N}]+/gu,' ').trim().toLowerCase();const descNorm=cleanDesc.replace(/[^\p{L}\p{N}]+/gu,' ').trim().toLowerCase();const validDesc=cleanDesc&&cleanDesc.split(/\s+/).length>=12&&descNorm!==titleNorm&&!descNorm.startsWith(titleNorm)&&!titleNorm.startsWith(descNorm);const d=validDesc?cleanDesc:'';heroDesc.textContent=d;heroDesc.style.display=d?'block':'none';heroMeta.textContent=dateText(x.date);const pos=document.querySelector('#heroPosition'),nxt=document.querySelector('#nextStory');if(pos)pos.textContent=(current+1)+' / '+headlines.length;if(nxt)nxt.textContent='التالي: '+(next?.title||'خبر جديد');heroTitle.classList.add('show');if(d)heroDesc.classList.add('show');const summaryToken=++heroSummaryToken;const cached=summaryCache.get(storyKey(x));if(cached){heroDesc.textContent=cached;heroDesc.style.display='block';heroDesc.classList.add('show')}else updateStorySummary(x,summaryToken);prefetchUpcoming(current+1,6);heroIndex++;currentStory={title:x.title,rawTitle:x.title,desc:''};vocalizeTitle(x.title).then(v=>{if(currentStory&&currentStory.rawTitle===x.title)currentStory.title=v;speakStory(v,'')});scheduleHero()},300)}
 function tick(){clock.textContent=new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});if(headlines.length){countdown--;if(countdown<0)countdown=0;paintCountdown()}}
 async function load(){try{const r=await fetch('/api/news?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;const data=await r.json();const a=Array.isArray(data)?data:(data.items||[]);if(!Array.isArray(data)&&data.hero&&data.hero.length)headlines=data.hero;const arabia=a.filter(x=>x.source==='العربية'&&x.description&&x.description.trim().split(/\s+/).length>=30).slice(0,8);const others=names.slice(1).map(name=>a.filter(x=>x.source===name&&x.description&&x.description.trim().split(/\s+/).length>=30).slice(0,2));if(!headlines.length)headlines=[];for(let i=0;i<8&&!(data.hero&&data.hero.length);i++){if(arabia[i])headlines.push(arabia[i]);const pool=others[i%others.length];if(pool&&pool[Math.floor(i/others.length)])headlines.push(pool[Math.floor(i/others.length)])}if(!headlines.length)headlines=a.filter(x=>x.source==='العربية').slice(0,3);box.innerHTML=names.map(name=>{const items=a.filter(x=>x.source===name).sort((x,y)=>(Date.parse(y.date||0)||0)-(Date.parse(x.date||0)||0)).slice(0,8);const text=items.length?items.map(x=>{const d=x.date?new Date(x.date):null;const tm=d&&!isNaN(d)?d.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'}):'';return esc((tm?tm+' — ':'')+x.title)}).join('　 ◆　 '):'جارٍ تحديث الأخبار…';return '<div class="strip ticker"><b>'+name+'</b><div class="ticker-window"><span>'+text+'</span></div></div>'}).join('');document.querySelector('#updated').textContent='آخر تحديث: '+new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});if(!heroTimer){heroIndex=0;prefetchUpcoming(0,6);await warmFirstStories(6);showHero()}else if(headlines.length){heroIndex=heroIndex%headlines.length;prefetchUpcoming(heroIndex,6)}}catch(e){box.innerHTML=names.map(n=>'<div class="strip ticker"><b>'+n+'</b><div class="ticker-window"><span>جارٍ تحديث الأخبار…</span></div></div>').join('')}}
 const prompts=['تابع الحساب لمتابعة آخر الأخبار','ما الخبر الذي تريد معرفة تفاصيله؟ اكتب في التعليقات','شارك البث مع من يهتم بمتابعة الأخبار'];let promptIndex=0;function rotatePrompt(){const e=document.querySelector('#engage');if(!e)return;e.classList.remove('visible');setTimeout(()=>{e.textContent=prompts[promptIndex++%prompts.length];e.classList.add('visible');setTimeout(()=>e.classList.remove('visible'),7000)},300)}
@@ -96,8 +96,40 @@ const PROMO_INTERVAL=60*1000;
 let promoActive=false,lastPromo=-1,promoTimer=null;
 function pickPromo(){let i=Math.floor(Math.random()*PROMO_VIDEOS.length);if(PROMO_VIDEOS.length>1&&i===lastPromo)i=(i+1)%PROMO_VIDEOS.length;lastPromo=i;return i}
 function schedulePromo(ms=PROMO_INTERVAL){if(promoTimer)clearTimeout(promoTimer);promoTimer=setTimeout(startPromo,ms)}
-function endPromo(){if(!promoActive)return;promoActive=false;const o=document.querySelector('#promoOverlay'),f=document.querySelector('#promoFrame'),v=document.querySelector('#promoVideo');if(v){try{v.pause()}catch{}}if(f)f.innerHTML='';if(o){o.classList.remove('show');o.setAttribute('aria-hidden','true')}schedulePromo()}
-async function startPromo(){if(promoActive)return;promoActive=true;if(promoTimer){clearTimeout(promoTimer);promoTimer=null}if(currentAudio){try{currentAudio.pause()}catch{}}const o=document.querySelector('#promoOverlay'),f=document.querySelector('#promoFrame');if(!o||!f){promoActive=false;schedulePromo();return}o.classList.add('show');o.setAttribute('aria-hidden','false');const src=PROMO_VIDEOS[pickPromo()];f.innerHTML='<video id="promoVideo" src="'+src+'" autoplay muted playsinline controls preload="auto" style="width:100%;height:100%;object-fit:contain;background:#000"></video>';const v=document.querySelector('#promoVideo');if(!v){endPromo();return}v.addEventListener('ended',endPromo,{once:true});v.addEventListener('error',()=>{f.innerHTML='<div style="color:white;text-align:center;padding:30vh 20px">تعذر تشغيل الفيديو. ستعود الأخبار الآن.</div>';setTimeout(endPromo,2500)},{once:true});v.muted=true;v.defaultMuted=true;try{await v.play()}catch(e){setTimeout(()=>v.play().catch(()=>{}),250)}}
+function stopNewsForPromo(){
+  clearTimeout(heroTimer);heroTimer=null;
+  if(currentAudio){try{currentAudio.pause();currentAudio.currentTime=0}catch{}}
+  try{if('speechSynthesis' in window)speechSynthesis.cancel()}catch{}
+}
+function endPromo(){
+  if(!promoActive)return;
+  promoActive=false;
+  const o=document.querySelector('#promoOverlay'),f=document.querySelector('#promoFrame'),v=document.querySelector('#promoVideo');
+  if(v){try{v.pause()}catch{}}
+  if(f)f.innerHTML='';
+  if(o){o.classList.remove('show');o.setAttribute('aria-hidden','true')}
+  lastSpokenKey='';
+  showHero();
+  schedulePromo();
+}
+async function startPromo(){
+  if(promoActive)return;
+  promoActive=true;
+  if(promoTimer){clearTimeout(promoTimer);promoTimer=null}
+  stopNewsForPromo();
+  const o=document.querySelector('#promoOverlay'),f=document.querySelector('#promoFrame');
+  if(!o||!f){promoActive=false;showHero();schedulePromo();return}
+  o.classList.add('show');o.setAttribute('aria-hidden','false');
+  const src=PROMO_VIDEOS[pickPromo()];
+  f.innerHTML='<video id="promoVideo" src="'+src+'" autoplay playsinline controls preload="auto" style="width:100%;height:100%;object-fit:contain;background:#000"></video>';
+  const v=document.querySelector('#promoVideo');if(!v){endPromo();return}
+  v.muted=false;v.volume=1;
+  v.addEventListener('ended',endPromo,{once:true});
+  v.addEventListener('error',()=>{f.innerHTML='<div style="color:white;text-align:center;padding:30vh 20px">تعذر تشغيل الفيديو. ستعود الأخبار الآن.</div>';setTimeout(endPromo,2500)},{once:true});
+  try{await v.play()}catch(e){
+    // iPhone Safari may block unmuted autoplay. Never silently mute; keep the visible play control for one tap.
+    v.muted=false;
+  }
+}
 document.querySelector('#promoClose')?.addEventListener('click',endPromo);
 schedulePromo(60*1000);
-
