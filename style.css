@@ -88,3 +88,23 @@
 /* Readable multi-line story summary */
 .hero-desc{display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:5!important;overflow:hidden!important;line-height:1.55!important;max-height:7.75em!important}
 @media(min-width:601px){.hero-desc{-webkit-line-clamp:7!important;max-height:10.85em!important}}
+
+/* Final mobile newsroom layout */
+.site-footer{direction:ltr;text-align:center;font:600 9px/1.25 Arial,sans-serif;color:#6f8298;letter-spacing:.15px;padding:.15vh 0 .25vh;white-space:nowrap}
+@media(max-width:600px){
+ .screen{padding:.65vh 2.5vw .35vh;gap:.38vh}
+ .brand{height:5.7vh}
+ .hero{height:39.5vh;padding:13px 15px}
+ .hero-top{min-height:38px}
+ .hero-content{flex:1;display:block;padding-top:4px}
+ .hero-source{font-size:12px;margin-bottom:4px}
+ .hero-image{width:96px;height:66px;margin:2px 0 7px 12px;border-radius:11px}
+ .hero-title{font-size:19px;line-height:1.34;max-height:4.05em}
+ .hero-desc{font-size:11.5px!important;line-height:1.48!important;-webkit-line-clamp:5!important;max-height:7.4em!important;margin-top:5px}
+ .hero-meta{font-size:8.5px;margin-top:3px}
+ .hero-status{font-size:8.5px;margin-top:3px}
+ .hero-foot{font-size:8.5px}
+ .ticker-head{height:3.25vh}
+ .strip{height:6.15vh}
+ #heroCountdown{left:64px!important;top:72px!important;font-size:16px!important}
+}
