@@ -40,7 +40,7 @@ async function speakStory(title='',desc=''){
 async function updateStorySummary(x,token){
   if(!(x?.articleUrl||x?.url))return;
   try{
-    const r=await fetch('/api/summary?url='+encodeURIComponent(x.articleUrl||x.url)+'&title='+encodeURIComponent(x.title)+'&v=5',{cache:'no-store'});
+    const r=await fetch('/api/summary?url='+encodeURIComponent(x.articleUrl||x.url)+'&title='+encodeURIComponent(x.title)+'&desc='+encodeURIComponent(x.description||'')+'&v=6',{cache:'no-store'});
     if(!r.ok)return;
     const data=await r.json(),summary=String(data.summary||'').trim();
     if(token!==heroSummaryToken||!summary||summary.split(/\s+/).length<20)return;
