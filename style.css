@@ -108,3 +108,5 @@
  .strip{height:6.15vh}
  #heroCountdown{left:64px!important;top:72px!important;font-size:16px!important}
 }
+
+.promo-overlay{display:none;position:fixed;inset:0;z-index:9999;background:#07111f;align-items:center;justify-content:center;flex-direction:column;padding:3vh 3vw}.promo-overlay.show{display:flex}.promo-head{text-align:center;color:#fff;margin-bottom:1.5vh}.promo-head b{display:block;font-size:26px}.promo-head span{font-size:14px;color:#9fb2c8}.promo-frame{width:min(94vw,520px);height:78vh;border-radius:18px;overflow:hidden;background:#000}.promo-frame iframe{width:100%;height:100%;border:0}.promo-close{margin-top:1.5vh;border:1px solid #53677d;border-radius:22px;background:#101e2d;color:#fff;padding:10px 22px;font:700 15px Arial}
