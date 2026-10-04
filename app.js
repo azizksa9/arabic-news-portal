@@ -93,7 +93,7 @@ const PROMO_VIDEOS=[
   'https://res.cloudinary.com/v2akwa5p/video/upload/v14044g50000d9m5op7og65k3m71aj7g.mp4'
 ];
 const PROMO_INTERVAL=60*1000;
-let promoActive=false,lastPromo=-1,promoTimer=null;
+let lastPromo=-1,promoTimer=null;
 function pickPromo(){let i=Math.floor(Math.random()*PROMO_VIDEOS.length);if(PROMO_VIDEOS.length>1&&i===lastPromo)i=(i+1)%PROMO_VIDEOS.length;lastPromo=i;return i}
 function schedulePromo(ms=PROMO_INTERVAL){if(promoTimer)clearTimeout(promoTimer);promoTimer=setTimeout(startPromo,ms)}
 function stopNewsForPromo(){
