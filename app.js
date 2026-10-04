@@ -7,36 +7,15 @@ function paintCountdown(){const el=ensureCountdown();el.textContent=countdown+' 
 function readingSeconds(){return 20}
 function scheduleHero(){clearTimeout(heroTimer);heroTimer=setTimeout(showHero,heroSeconds*1000)}
 let currentAudio=null;
-function ensureAudio(){
-  let a=document.querySelector('#newsAudio');
-  if(a)return a;
-  a=document.createElement('audio');a.id='newsAudio';a.preload='auto';a.setAttribute('playsinline','');a.style.display='none';document.body.appendChild(a);return a;
-}
-async function fetchSpeechUrl(text){
-  const r=await fetch('/api/speech',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text})});
-  if(!r.ok){let msg='';try{msg=(await r.json()).error||''}catch{}throw new Error(msg||('HTTP '+r.status))}
-  return URL.createObjectURL(await r.blob());
-}
-async function playSpeech(text){
-  const audio=ensureAudio();currentAudio=audio;
-  if(soundBtn)soundBtn.textContent='🔊 الصوت يعمل';
-  const url=await fetchSpeechUrl(text);
-  if(audio.dataset.url)URL.revokeObjectURL(audio.dataset.url);
-  audio.dataset.url=url;audio.src=url;audio.load();
-  if(soundBtn)soundBtn.textContent='🔊 الصوت يعمل';
-  audio.onplaying=()=>{if(soundBtn)soundBtn.textContent='🔊 الصوت يعمل'};
-  audio.onended=()=>{if(soundBtn)soundBtn.textContent='🔊 الصوت يعمل'};
-  audio.onerror=()=>{lastSpokenKey='';if(soundBtn)soundBtn.textContent='⚠️ تعذر تشغيل ملف الصوت'};
-  await audio.play();
-}
-async function speakStory(title='',desc=''){
-  if(!soundEnabled)return;
-  const text=String(title||'').replace(/\s*[#＃]\s*(العربية|Al Arabiya)\s*$/i,'').replace(/\s*[-–—|]\s*(العربية|Al Arabiya)\s*$/i,'').replace(/\s+(العربية)\s*$/,'').replace(/\s+/g,' ').trim();
-  if(!text||text===lastSpokenKey)return;
-  lastSpokenKey=text;
-  try{await playSpeech(text)}
-  catch(e){lastSpokenKey='';const reason=(e&&e.message?e.message:'خطأ غير معروف').replace(/\s+/g,' ').slice(0,70);if(soundBtn)soundBtn.textContent='⚠️ '+reason}
-}
+const QURAN_RECITER='Alafasy_128kbps';
+const QURAN_AYAH_COUNTS=[7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+let quranSurah=1,quranAyah=1;
+function ensureAudio(){let a=document.querySelector('#newsAudio');if(a)return a;a=document.createElement('audio');a.id='newsAudio';a.preload='auto';a.setAttribute('playsinline','');a.style.display='none';document.body.appendChild(a);return a}
+function pad3(n){return String(n).padStart(3,'0')}
+function quranUrl(){return 'https://everyayah.com/data/'+QURAN_RECITER+'/'+pad3(quranSurah)+pad3(quranAyah)+'.mp3'}
+function advanceAyah(){quranAyah++;if(quranAyah>QURAN_AYAH_COUNTS[quranSurah-1]){quranAyah=1;quranSurah++;if(quranSurah>114)quranSurah=1}}
+async function playQuran(){if(!soundEnabled)return;const audio=ensureAudio();currentAudio=audio;audio.src=quranUrl();audio.load();audio.onended=()=>{advanceAyah();playQuran()};audio.onerror=()=>{advanceAyah();if(soundBtn)soundBtn.textContent='⚠️ تعذر تحميل التلاوة';setTimeout(()=>playQuran(),1500)};audio.onplaying=()=>{if(soundBtn)soundBtn.textContent='🔊 القرآن يعمل'};await audio.play()}
+async function speakStory(){return}
 async function updateStorySummary(x,token){
   const summary=await fetchSummary(x);
   if(token!==heroSummaryToken||!summary)return;
@@ -86,4 +65,4 @@ function tick(){clock.textContent=new Date().toLocaleTimeString('ar-SA',{hour:'2
 async function load(){try{const r=await fetch('/api/news?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;const data=await r.json();const a=Array.isArray(data)?data:(data.items||[]);if(!Array.isArray(data)&&data.hero&&data.hero.length)headlines=data.hero;const arabia=a.filter(x=>x.source==='العربية'&&x.description&&x.description.trim().split(/\s+/).length>=30).slice(0,8);const others=names.slice(1).map(name=>a.filter(x=>x.source===name&&x.description&&x.description.trim().split(/\s+/).length>=30).slice(0,2));if(!headlines.length)headlines=[];for(let i=0;i<8&&!(data.hero&&data.hero.length);i++){if(arabia[i])headlines.push(arabia[i]);const pool=others[i%others.length];if(pool&&pool[Math.floor(i/others.length)])headlines.push(pool[Math.floor(i/others.length)])}if(!headlines.length)headlines=a.filter(x=>x.source==='العربية').slice(0,3);box.innerHTML=names.map(name=>{const items=a.filter(x=>x.source===name).sort((x,y)=>(Date.parse(y.date||0)||0)-(Date.parse(x.date||0)||0)).slice(0,8);const text=items.length?items.map(x=>{const d=x.date?new Date(x.date):null;const tm=d&&!isNaN(d)?d.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'}):'';return esc((tm?tm+' — ':'')+x.title)}).join('　 ◆　 '):'جارٍ تحديث الأخبار…';return '<div class="strip ticker"><b>'+name+'</b><div class="ticker-window"><span>'+text+'</span></div></div>'}).join('');document.querySelector('#updated').textContent='آخر تحديث: '+new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});if(!heroTimer){heroIndex=0;prefetchUpcoming(0,6);await warmFirstStories(6);showHero()}else if(headlines.length){heroIndex=heroIndex%headlines.length;prefetchUpcoming(heroIndex,6)}}catch(e){box.innerHTML=names.map(n=>'<div class="strip ticker"><b>'+n+'</b><div class="ticker-window"><span>جارٍ تحديث الأخبار…</span></div></div>').join('')}}
 const prompts=['تابع الحساب لمتابعة آخر الأخبار','ما الخبر الذي تريد معرفة تفاصيله؟ اكتب في التعليقات','شارك البث مع من يهتم بمتابعة الأخبار'];let promptIndex=0;function rotatePrompt(){const e=document.querySelector('#engage');if(!e)return;e.classList.remove('visible');setTimeout(()=>{e.textContent=prompts[promptIndex++%prompts.length];e.classList.add('visible');setTimeout(()=>e.classList.remove('visible'),7000)},300)}
 tick();setInterval(tick,1000);load();setTimeout(rotatePrompt,8000);setInterval(rotatePrompt,60000);setInterval(load,60000);
-const soundBtn=document.querySelector('#soundBtn');if(soundBtn)soundBtn.addEventListener('click',async()=>{soundEnabled=true;lastSpokenKey='';const audio=ensureAudio();try{audio.muted=false;audio.volume=1;if(currentStory)await speakStory(currentStory.title,'');else soundBtn.textContent='🔊 الصوت يعمل'}catch(e){const reason=(e&&e.message?e.message:'خطأ غير معروف').replace(/\s+/g,' ').slice(0,70);soundBtn.textContent='⚠️ '+reason}});
+const soundBtn=document.querySelector('#soundBtn');if(soundBtn)soundBtn.addEventListener('click',async()=>{const audio=ensureAudio();if(soundEnabled){soundEnabled=false;audio.pause();soundBtn.textContent='🔇 تشغيل القرآن';return}soundEnabled=true;try{audio.muted=false;audio.volume=1;soundBtn.textContent='⏳ جارٍ تشغيل القرآن';await playQuran()}catch(e){soundEnabled=false;soundBtn.textContent='⚠️ تعذر تشغيل القرآن'}});
