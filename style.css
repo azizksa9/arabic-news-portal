@@ -179,3 +179,9 @@ html.live-mode .hero-title{font-weight:700!important;line-height:1.55!important}
 html.live-mode .hero-desc{font-family:"Noto Sans Arabic",sans-serif!important;font-weight:500!important;line-height:1.75!important}
 html.live-mode .hero-source,html.live-mode #soundBtn,html.live-mode .hero-meta,html.live-mode .hero-status,html.live-mode .hero-foot,html.live-mode .strip,html.live-mode .ticker-window span{font-family:"Noto Sans Arabic",sans-serif!important}
 html.live-mode .strip{font-weight:600!important}
+
+
+/* VERIFIED live hero watermark v5 */
+html.live-mode .hero-content{position:relative!important;isolation:isolate!important;overflow:hidden!important;border-radius:14px}
+html.live-mode .hero-image{position:absolute!important;right:0!important;top:8%!important;left:auto!important;width:100%!important;height:68%!important;max-width:none!important;max-height:none!important;margin:0!important;float:none!important;object-fit:cover!important;border-radius:14px!important;opacity:.09!important;filter:saturate(.65) contrast(.85)!important;z-index:0!important;pointer-events:none!important}
+html.live-mode .hero-source,html.live-mode .hero-title,html.live-mode .hero-desc,html.live-mode .hero-meta,html.live-mode .hero-status{position:relative!important;z-index:2!important}
