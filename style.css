@@ -168,3 +168,14 @@ html.live-mode .strip{font-weight:600;overflow:hidden}
 html.live-mode .strip b{font-weight:700;line-height:1.35;white-space:normal;text-align:center;padding-inline:.7vh}
 html.live-mode .ticker-window{min-width:0;overflow:hidden}
 html.live-mode .ticker-window span{font-weight:600;line-height:1.5;white-space:nowrap;padding-inline:1vh}
+
+
+/* Arabic webfont v3 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
+html.live-mode body,html.live-mode .screen{font-family:"Noto Sans Arabic",sans-serif!important}
+html.live-mode .brand-title,html.live-mode .hero-title,html.live-mode .ticker-head,html.live-mode .hero-badge,html.live-mode .strip b{font-family:"Noto Kufi Arabic","Noto Sans Arabic",sans-serif!important}
+html.live-mode .brand-title{font-weight:700!important}
+html.live-mode .hero-title{font-weight:700!important;line-height:1.55!important}
+html.live-mode .hero-desc{font-family:"Noto Sans Arabic",sans-serif!important;font-weight:500!important;line-height:1.75!important}
+html.live-mode .hero-source,html.live-mode #soundBtn,html.live-mode .hero-meta,html.live-mode .hero-status,html.live-mode .hero-foot,html.live-mode .strip,html.live-mode .ticker-window span{font-family:"Noto Sans Arabic",sans-serif!important}
+html.live-mode .strip{font-weight:600!important}
